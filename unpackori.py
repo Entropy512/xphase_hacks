@@ -36,12 +36,15 @@ totalOccurances = len(occurances)
 for j in range(len(occurances)):
     occurances[j] = int(occurances[j]/8)
 
+#Lens identifier/index
 lensidx = 0
+
+#Bracket identifier/index
 bktidx = 0
 maxbkt = 3 #TODO, change this if len(occurances) is 301
 
 for j in range(len(occurances)-1):
-    if(j % 2 == 0):  #Even number indexes are thumbnails
+    if(j % 2 == 0):  #Even numbered images are thumbnails, skip them
         continue;
     dest_fname = str(lensidx) + "_" + str(bktidx) + ".jpg"
     bktidx += 1
