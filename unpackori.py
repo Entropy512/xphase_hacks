@@ -9,6 +9,7 @@ from bitstring import ConstBitStream
 import os
 import sys
 import mmap
+import struct
 
 def copypart(src,dest,start,length,bufsize=1024*1024):
     with open(src,'rb') as f1:
@@ -38,16 +39,44 @@ for j in range(len(occurances)):
 
 #Lens identifier/index
 lensidx = 0
+maxlens = 25
 
 #Bracket identifier/index
 bktidx = 0
 maxbkt = 3 #TODO, change this if len(occurances) is 301
 
-mode = 1 #FIXME:  Make this a command line option with argparse
+if(len(occurances) == 151):
+    mode = 0
+elif(len(occurances) == 301):
+    mode = 1
+else:
+    print("Unknown number of images in file, falling back to analysis mode")
+    mode = 2
 
+with open(bin_file,'rb') as myfile:
+    for j in range(25):
+        myfile.seek(0x434+3080*j)
+        idx = myfile.read(2)
+        print(hex(struct.unpack('<H',idx)[0]))
+
+with open(bin_file,'rb') as myfile:
+    myfile.seek(0x130fc+2)
+    tablelen = struct.unpack('<H', myfile.read(2))[0]
+    myfile.seek(0x130fc)
+    oritable = myfile.read(tablelen)
+    imgstart = 0x130fc+12+tablelen
+    print(hex(imgstart))
+
+
+
+#FIXME:  We are currently ignoring the last image in the ORI.  It's probably SOME sort of preview.
+#We should append the file size as the last entry in the list of occurances so the code below can handle it
 for j in range(len(occurances)-1):
+    tbloffset = (occurances[j]-6)-imgstart
+    tblloc = oritable.find(struct.pack('<L', tbloffset))
+    print(str(j) + " " + str(hex(tbloffset)) + " " + hex(tblloc))
     datalen = occurances[j+1] - occurances[j]
-    if(mode == 0):
+    if(mode == 0): #3-shot ORIs store images for a single lens together in bracket sequence
         if(j % 2 == 0):  #Even numbered images are thumbnails, skip them
             continue
         dest_fname = str(lensidx) + "_" + str(bktidx) + ".jpg"
@@ -55,7 +84,19 @@ for j in range(len(occurances)-1):
         if(bktidx >= maxbkt):
             lensidx += 1
             bktidx = 0
+    elif(mode == 1):
+        #As opposed to 3-shot, 6-shot ORIs store all images for a given EV together,
+        #sequencing across lenses and then repeating
+        if(j % 2 == 0):  #Even numbered images are still thumbnails, skip them
+            continue
+        dest_fname = str(lensidx) + "_" + str(bktidx) + ".jpg"
+        #honestly we can keep the above common to both mode0 and mode1 and have the if here,
+        #FIXME later
+        lensidx += 1
+        if(lensidx >= maxlens):
+            bktidx += 1
+            lensidx = 0
     else:
         dest_fname = str(int(j)) + ".jpg"
     #JFIF text is 6 bytes past beginning of file.  FIXME:  Handle this more cleanly
-    copypart(bin_file,dest_fname, occurances[j]-6, datalen+6)
+    copypart(bin_file,dest_fname, occurances[j]-6, datalen)
