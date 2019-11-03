@@ -43,15 +43,19 @@ lensidx = 0
 bktidx = 0
 maxbkt = 3 #TODO, change this if len(occurances) is 301
 
+mode = 1 #FIXME:  Make this a command line option with argparse
+
 for j in range(len(occurances)-1):
-    if(j % 2 == 0):  #Even numbered images are thumbnails, skip them
-        continue;
-    dest_fname = str(lensidx) + "_" + str(bktidx) + ".jpg"
-    bktidx += 1
-    if(bktidx >= maxbkt):
-        lensidx += 1
-        bktidx = 0
     datalen = occurances[j+1] - occurances[j]
-    print(str(j) + " " + str(datalen))
+    if(mode == 0):
+        if(j % 2 == 0):  #Even numbered images are thumbnails, skip them
+            continue
+        dest_fname = str(lensidx) + "_" + str(bktidx) + ".jpg"
+        bktidx += 1
+        if(bktidx >= maxbkt):
+            lensidx += 1
+            bktidx = 0
+    else:
+        dest_fname = str(int(j)) + ".jpg"
     #JFIF text is 6 bytes past beginning of file.  FIXME:  Handle this more cleanly
     copypart(bin_file,dest_fname, occurances[j]-6, datalen+6)
