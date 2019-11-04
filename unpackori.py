@@ -1,11 +1,25 @@
 #!/usr/bin/python3
 
+#Copyright 2019 Andrew T. Dodd
+
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 #horribly hackish Xphase ORI unpacker
 #much code kanged from stackoverflow samples -
 # https://stackoverflow.com/questions/49182097/searching-for-all-occurance-of-byte-strings-in-binary-file
 # https://stackoverflow.com/questions/2363483/python-slicing-a-very-large-binary-file
 
-from bitstring import ConstBitStream
 import os
 import sys
 import mmap
@@ -25,49 +39,21 @@ if(len(sys.argv) < 2):
     print("Too few arguments")
     exit(-1)
 
-byte_data = rb'JFIF'
-
 bin_file = sys.argv[1]
 
-s = ConstBitStream(filename=bin_file)
-occurances = s.findall(byte_data, bytealigned=True)
-occurances = list(occurances)
-totalOccurances = len(occurances)
-#print(totalOccurances)
-for j in range(len(occurances)):
-    occurances[j] = int(occurances[j]/8)
-
-#Lens identifier/index
-lensidx = 0
-maxlens = 25
-
-#Bracket identifier/index
-bktidx = 0
-maxbkt = 3 #TODO, change this if len(occurances) is 301
-
-if(len(occurances) == 151):
-    mode = 0
-elif(len(occurances) == 301):
-    mode = 1
-else:
-    print("Unknown number of images in file, falling back to analysis mode")
-    mode = 2
-
-with open(bin_file,'rb') as myfile:
-    for j in range(25):
-        myfile.seek(0x434+3080*j)
-        idx = myfile.read(2)
-        print(hex(struct.unpack('<H',idx)[0]))
+#with open(bin_file,'rb') as myfile:
+#    for j in range(25):
+#        myfile.seek(0x434+3080*j)
+#        idx = myfile.read(2)
+#        print(hex(struct.unpack('<H',idx)[0]))
 
 with open(bin_file,'rb') as myfile:
     myfile.seek(0x130fc+2)
+    #the below should probably be <L
     tablelen = struct.unpack('<H', myfile.read(2))[0]
     myfile.seek(0x130fc)
     oritable = myfile.read(tablelen+12)
     imgstart = 0x130fc+12+tablelen #Instead of calculating this, I think we can just pull it from the table
-    print(hex(imgstart))
-
-nshots = int(tablelen/1000)
 
 for entrynum in range(int(tablelen/20)):
     tbloffset = 6 + entrynum * 20
