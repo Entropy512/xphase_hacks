@@ -69,15 +69,17 @@ with open(bin_file,'rb') as myfile:
 
 nshots = int(tablelen/1000)
 
-for lens in range(25):
-    for shot in range(nshots):
-        print(str((lens*nshots)+shot))
-        tbloffset = 0x12 + ((lens*nshots) + shot) * 20
-        tbloffset += 25*nshots*20
-        (fileoffset, filelen) = struct.unpack_from('<LL', oritable, offset=tbloffset)
-        filestart = imgstart + fileoffset
+for entrynum in range(int(tablelen/20)):
+    tbloffset = 6 + entrynum * 20
+    (imgtype, lens, shot, fileoffset, filelen) = struct.unpack_from('<HHHxxxxxxLL', oritable, offset=tbloffset)
+    filestart = imgstart + fileoffset
+    if(imgtype == 1):
+        dest_fname = str(lens) + "_" + str(shot) + "_preview.jpg"
+    elif(imgtype == 2):
         dest_fname = str(lens) + "_" + str(shot) + ".jpg"
-        copypart(bin_file, dest_fname, filestart, filelen)
+    else:
+        Raise("Unknown image type found in ORI table in entry " + str(entrynum) + ", aborting")
+    copypart(bin_file, dest_fname, filestart, filelen)
 
 #FIXME:  We are currently ignoring the last image in the ORI.  It's probably SOME sort of preview.
 #We should append the file size as the last entry in the list of occurances so the code below can handle it
