@@ -63,40 +63,51 @@ with open(bin_file,'rb') as myfile:
     myfile.seek(0x130fc+2)
     tablelen = struct.unpack('<H', myfile.read(2))[0]
     myfile.seek(0x130fc)
-    oritable = myfile.read(tablelen)
-    imgstart = 0x130fc+12+tablelen
+    oritable = myfile.read(tablelen+12)
+    imgstart = 0x130fc+12+tablelen #Instead of calculating this, I think we can just pull it from the table
     print(hex(imgstart))
 
+nshots = int(tablelen/1000)
 
+for lens in range(25):
+    for shot in range(nshots):
+        print(str((lens*nshots)+shot))
+        tbloffset = 0x12 + ((lens*nshots) + shot) * 20
+        tbloffset += 25*nshots*20
+        (fileoffset, filelen) = struct.unpack_from('<LL', oritable, offset=tbloffset)
+        filestart = imgstart + fileoffset
+        dest_fname = str(lens) + "_" + str(shot) + ".jpg"
+        copypart(bin_file, dest_fname, filestart, filelen)
 
 #FIXME:  We are currently ignoring the last image in the ORI.  It's probably SOME sort of preview.
 #We should append the file size as the last entry in the list of occurances so the code below can handle it
-for j in range(len(occurances)-1):
-    tbloffset = (occurances[j]-6)-imgstart
-    tblloc = oritable.find(struct.pack('<L', tbloffset))
-    print(str(j) + " " + str(hex(tbloffset)) + " " + hex(tblloc))
-    datalen = occurances[j+1] - occurances[j]
-    if(mode == 0): #3-shot ORIs store images for a single lens together in bracket sequence
-        if(j % 2 == 0):  #Even numbered images are thumbnails, skip them
-            continue
-        dest_fname = str(lensidx) + "_" + str(bktidx) + ".jpg"
-        bktidx += 1
-        if(bktidx >= maxbkt):
-            lensidx += 1
-            bktidx = 0
-    elif(mode == 1):
-        #As opposed to 3-shot, 6-shot ORIs store all images for a given EV together,
-        #sequencing across lenses and then repeating
-        if(j % 2 == 0):  #Even numbered images are still thumbnails, skip them
-            continue
-        dest_fname = str(lensidx) + "_" + str(bktidx) + ".jpg"
-        #honestly we can keep the above common to both mode0 and mode1 and have the if here,
-        #FIXME later
-        lensidx += 1
-        if(lensidx >= maxlens):
+if(0):
+    for j in range(len(occurances)-1):
+        tbloffset = (occurances[j]-6)-imgstart
+        tblloc = oritable.find(struct.pack('<L', tbloffset))
+        datalen = occurances[j+1] - occurances[j]
+        print(str(j) + "," + str(tbloffset) + "," + str(tblloc) + "," + str(datalen))
+        if(mode == 0): #3-shot ORIs store images for a single lens together in bracket sequence
+            if(j % 2 == 0):  #Even numbered images are thumbnails, skip them
+                continue
+            dest_fname = str(lensidx) + "_" + str(bktidx) + ".jpg"
             bktidx += 1
-            lensidx = 0
-    else:
-        dest_fname = str(int(j)) + ".jpg"
-    #JFIF text is 6 bytes past beginning of file.  FIXME:  Handle this more cleanly
-    copypart(bin_file,dest_fname, occurances[j]-6, datalen)
+            if(bktidx >= maxbkt):
+                lensidx += 1
+                bktidx = 0
+        elif(mode == 1):
+            #As opposed to 3-shot, 6-shot ORIs store all images for a given EV together,
+            #sequencing across lenses and then repeating
+            if(j % 2 == 0):  #Even numbered images are still thumbnails, skip them
+                continue
+            dest_fname = str(lensidx) + "_" + str(bktidx) + ".jpg"
+            #honestly we can keep the above common to both mode0 and mode1 and have the if here,
+            #FIXME later
+            lensidx += 1
+            if(lensidx >= maxlens):
+                bktidx += 1
+                lensidx = 0
+        else:
+            dest_fname = str(int(j)) + ".jpg"
+        #JFIF text is 6 bytes past beginning of file.  FIXME:  Handle this more cleanly
+        copypart(bin_file,dest_fname, occurances[j]-6, datalen)
