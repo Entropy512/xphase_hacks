@@ -48,15 +48,45 @@ bin_file = sys.argv[1]
 #        print(hex(struct.unpack('<H',idx)[0]))
 
 with open(bin_file,'rb') as myfile:
-    myfile.seek(0x130fc+2)
-    #the below should probably be <L
-    tablelen = struct.unpack('<H', myfile.read(2))[0]
-    myfile.seek(0x130fc)
-    oritable = myfile.read(tablelen+12)
-    imgstart = 0x130fc+12+tablelen #Instead of calculating this, I think we can just pull it from the table
+    cur_offset = 2
+    
+    #First header block, block type
+    myfile.seek(cur_offset)
+    (blocktype, nbytes) = struct.unpack('<hL', myfile.read(6))
+    print("Blocktype is: " + str(blocktype) + ", expected -48 (unknown file header data)")
+    cur_offset += 6 + nbytes
+
+    #Second header block, 25*16 = 800 bytes, 16 bytes of ??? data per lens
+    myfile.seek(cur_offset)
+    (blocktype, nbytes) = struct.unpack('<hL', myfile.read(6))
+    print("Blocktype is: " + str(blocktype) + ", expected -40 (small lens data blocks)")
+    cur_offset += 6 + nbytes
+
+    #Third header block, 25*3080 bytes, 3080 bytes of ??? data per lens
+    myfile.seek(cur_offset)
+    (blocktype, nbytes) = struct.unpack('<hL', myfile.read(6))
+    print("Blocktype is: " + str(blocktype) + ", expected -41 (unknown large lens data)")
+    cur_offset += 6 + nbytes
+
+    #ORI table, 6 + 25*2*20 bytes per number of bracket shots.
+    myfile.seek(cur_offset)
+    (blocktype, nbytes) = struct.unpack('<hL', myfile.read(6))
+    tablelen = nbytes
+    tablestart = cur_offset + 6
+    myfile.seek(tablestart)
+    oritable = myfile.read(tablelen)
+    print("Blocktype is: " + str(blocktype) + ", expected -39 (ORI image index table)")
+    cur_offset += 6 + nbytes
+
+    #Image data block, variable length
+    myfile.seek(cur_offset)
+    (blocktype, nbytes) = struct.unpack('<hL', myfile.read(6))
+    print("Blocktype is: " + str(blocktype) + ", expected -45 (image data block)")
+    imgstart = cur_offset + 6
+    cur_offset += 6 + nbytes    
 
 for entrynum in range(int(tablelen/20)):
-    tbloffset = 6 + entrynum * 20
+    tbloffset = entrynum * 20
     (imgtype, lens, shot, fileoffset, filelen) = struct.unpack_from('<HHHxxxxxxLL', oritable, offset=tbloffset)
     filestart = imgstart + fileoffset
     if(imgtype == 1):
