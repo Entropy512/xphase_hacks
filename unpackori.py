@@ -56,7 +56,7 @@ with open(bin_file,'rb') as myfile:
     print("Blocktype is: " + str(blocktype) + ", expected -48 (unknown file header data)")
     cur_offset += 6 + nbytes
 
-    #Second header block, 25*16 = 800 bytes, 16 bytes of ??? data per lens
+    #Second header block, 25*32 = 800 bytes, 16 bytes of ??? data per lens
     myfile.seek(cur_offset)
     (blocktype, nbytes) = struct.unpack('<hL', myfile.read(6))
     print("Blocktype is: " + str(blocktype) + ", expected -40 (small lens data blocks)")
