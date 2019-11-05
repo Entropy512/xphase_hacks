@@ -22,7 +22,6 @@
 
 import os
 import sys
-import mmap
 import struct
 
 def copypart(src,dest,start,length,bufsize=1024*1024):
