@@ -48,41 +48,54 @@ bin_file = sys.argv[1]
 
 with open(bin_file,'rb') as myfile:
     cur_offset = 2
-    
-    #First header block, block type
-    myfile.seek(cur_offset)
-    (blocktype, nbytes) = struct.unpack('<hL', myfile.read(6))
-    print("Blocktype is: " + str(blocktype) + ", expected -48 (unknown file header data)")
-    cur_offset += 6 + nbytes
 
-    #Second header block, 25*32 = 800 bytes, 16 bytes of ??? data per lens
-    myfile.seek(cur_offset)
-    (blocktype, nbytes) = struct.unpack('<hL', myfile.read(6))
-    print("Blocktype is: " + str(blocktype) + ", expected -40 (small lens data blocks)")
-    cur_offset += 6 + nbytes
+    blocknum = 0
+    myfile.seek(0, os.SEEK_END)
+    filelen = myfile.tell()
 
-    #Third header block, 25*3080 bytes, 3080 bytes of ??? data per lens
-    myfile.seek(cur_offset)
-    (blocktype, nbytes) = struct.unpack('<hL', myfile.read(6))
-    print("Blocktype is: " + str(blocktype) + ", expected -41 (unknown large lens data)")
-    cur_offset += 6 + nbytes
+    while(cur_offset < filelen):
+        myfile.seek(cur_offset)
+        (blocktype, nbytes) = struct.unpack('<hL', myfile.read(6))
+        print("Block number " + str(blocknum) + " has type " + str(blocktype) +
+              " with length " + str(nbytes) + " at offset " + hex(cur_offset + 6))
 
-    #ORI table, 6 + 25*2*20 bytes per number of bracket shots.
-    myfile.seek(cur_offset)
-    (blocktype, nbytes) = struct.unpack('<hL', myfile.read(6))
-    tablelen = nbytes
-    tablestart = cur_offset + 6
-    myfile.seek(tablestart)
-    oritable = myfile.read(tablelen)
-    print("Blocktype is: " + str(blocktype) + ", expected -39 (ORI image index table)")
-    cur_offset += 6 + nbytes
+        if(blocktype == -48):
+            print("\tUnknown file header data")
 
-    #Image data block, variable length
-    myfile.seek(cur_offset)
-    (blocktype, nbytes) = struct.unpack('<hL', myfile.read(6))
-    print("Blocktype is: " + str(blocktype) + ", expected -45 (image data block)")
-    imgstart = cur_offset + 6
-    cur_offset += 6 + nbytes    
+        elif(blocktype == -40):
+            print("\tSmall lens data blocks (32 bytes per lens)")
+
+        elif(blocktype == -41):
+            print("\tLarge lens data blocks (3080 bytes per lens)")
+
+        elif(blocktype == -39):
+            tablestart = cur_offset + 6
+            tablelen = nbytes
+            myfile.seek(tablestart)
+            oritable = myfile.read(tablelen)
+            print("\tORI image table found")
+
+        elif(blocktype == -45):
+            imgstart = cur_offset + 6
+            print("\tImage data block found")
+
+        elif(blocktype == -46):
+            previewstart = cur_offset + 6
+            print("\tSpare duplicate image block found")
+            with open('sparedup.jpg', 'wb') as sparedupfile:
+                myfile.seek(previewstart)
+                sparedupfile.write(myfile.read(nbytes))
+
+        elif(blocktype == -43):
+            previewstart = cur_offset + 6
+            print("\tUser Nadir image block found")
+            with open('usernadir.jpg', 'wb') as previewfile:
+                myfile.seek(previewstart)
+                previewfile.write(myfile.read(nbytes))
+
+        else:
+            print("\tUnknown block type")
+        cur_offset += 6 + nbytes
 
 for entrynum in range(int(tablelen/20)):
     tbloffset = entrynum * 20
@@ -93,7 +106,8 @@ for entrynum in range(int(tablelen/20)):
     elif(imgtype == 2):
         dest_fname = str(lens) + "_" + str(shot) + ".jpg"
     else:
-        Raise("Unknown image type found in ORI table in entry " + str(entrynum) + ", aborting")
+        print("Unknown image type " + str(imgtype) + " found in ORI table in entry " + str(entrynum) + ", aborting")
+        exit(-1)
     copypart(bin_file, dest_fname, filestart, filelen)
 
 #FIXME:  We are currently ignoring the last image in the ORI.  It's probably SOME sort of preview.
