@@ -64,6 +64,9 @@ with open(bin_file,'rb') as myfile:
 
         elif(blocktype == -40):
             print("\tSmall lens data blocks (32 bytes per lens)")
+            with open('smallblock.bin', 'wb') as smallblockfile:
+                myfile.seek(cur_offset + 6)
+                smallblockfile.write(myfile.read(nbytes))
 
         elif(blocktype == -41):
             print("\tLarge lens data blocks (3080 bytes per lens)")
