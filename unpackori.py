@@ -61,6 +61,9 @@ with open(bin_file,'rb') as myfile:
 
         if(blocktype == -48):
             print("\tUnknown file header data")
+            with open('headerdata.bin', 'wb') as headerfile:
+                myfile.seek(cur_offset + 6)
+                headerfile.write(myfile.read(nbytes))
 
         elif(blocktype == -40):
             print("\tSmall lens data blocks (32 bytes per lens)")
