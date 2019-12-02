@@ -67,6 +67,9 @@ with open(bin_file,'rb') as myfile:
 
         elif(blocktype == -41):
             print("\tLarge lens data blocks (3080 bytes per lens)")
+            with open('largeblock.bin', 'wb') as largeblockfile:
+                myfile.seek(cur_offset + 6)
+                largeblockfile.write(myfile.read(nbytes))
 
         elif(blocktype == -39):
             tablestart = cur_offset + 6
