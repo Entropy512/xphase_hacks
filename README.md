@@ -6,7 +6,7 @@ colorspace/transfer function, but have many unused bins in the histogram and lum
 code values out of 255 nearly unused.  (Under some circumstances, code values outside of 24-226 are used, but rarely.  Pure black
 clips to 24 and pure white to 226...)
 
-The camera does now have a raw DNG option, although white balance is prescaled and the values are multiplied by (roughly) 64 after
+The camera does now have a raw DNG option, although white balance is prescaled and the values are multiplied by 64 after
 white balance prescaling to fill an int16 with huge histogram gaps, making files 60% larger than not scaling anything and saving bitpacked
 data with BitsPerSample = 10
 
