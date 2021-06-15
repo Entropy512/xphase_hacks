@@ -2,7 +2,7 @@ A few scripts for fiddling with the Xphase Pro camera family for those who alrea
 UnpackORI that is not Wintel dependent.
 
 As of June 14, 2021 - the camera is still heavily dependent on a JPEG-only workflow.  JPEGs are at least not in sRGB
-colorspace/transfer function, but have many unused bins in the histogram and luma range is (roughly) 24-226, leaving almost 50
+colorspace/transfer function, but luma range is (roughly) 24-226, leaving almost 50
 code values out of 255 nearly unused.  (Under some circumstances, code values outside of 24-226 are used, but rarely.  Pure black
 clips to 24 and pure white to 226...)
 
