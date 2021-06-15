@@ -82,6 +82,8 @@ with open(bin_file,'rb') as myfile:
             tablelen = nbytes
             myfile.seek(tablestart)
             oritable = myfile.read(tablelen)
+            with open('oritable.bin', 'wb' ) as tablefile:
+                tablefile.write(oritable)
             print("\tORI image table found")
 
         elif(blocktype == -45):
