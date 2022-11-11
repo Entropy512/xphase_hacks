@@ -91,10 +91,16 @@ altvals = np.where(codevals_lin10 <= cvthresh, codevals_lin10, cvthresh+cvdens*n
 
 altlog = np.where(codevals_lin8 <= cvthresh, codevals_lin8, cvthresh*np.power(2.0, (codevals_lin8-cvthresh)/cvdens))
 
+cvthresh_legal = 56.0
+codevals_lin8_legal = np.arange(0.0, (235-16)+1, 1.0)
+evdelt_legal = np.log2(cvthresh_legal/1023.0)
+cvdens_legal = (cvthresh_legal-(235-16))/evdelt_legal
+altlog_legal = np.where(codevals_lin8_legal <= cvthresh_legal, codevals_lin8_legal, cvthresh_legal*np.power(2.0, (codevals_lin8_legal-cvthresh_legal)/cvdens_legal))
 
 plt.plot(np.log2(lut[codevals_xphase])[:-1],1.0/np.diff(np.log2(lut[codevals_xphase])), label='Xphase JPEG')
 plt.plot(np.log2(codevals_lin10/1023.0)[:-1],1.0/np.diff(np.log2(codevals_lin10/1023.0)), label='Xphase RAW')
 plt.plot(np.log2(altlog/1023.0)[:-1],1.0/np.diff(np.log2(altlog/1023.0)), label='Alternate log formula')
+plt.plot(np.log2(altlog_legal/1023.0)[:-1],1.0/np.diff(np.log2(altlog_legal/1023.0)), label='Alternate log formula (legal range)')
 plt.axhline(y=1.0/np.log2(1.05), alpha=0.5, color='k', dashes=(5,1,2,1), label='Human dim threshold (5%)')
 plt.axhline(y=1.0/np.log2(1.02), alpha=0.5, color='k', dashes=(2,2), label='Human bright threshold (2%)')
 #plt.axhline(y=1.0/np.log2(1.01), alpha=0.5, color='k', dashes=(2,1), label='Human bright threshold (1%)')
