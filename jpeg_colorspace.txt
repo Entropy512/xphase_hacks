@@ -1,0 +1,7 @@
+Determined by feeding "maximum saturation without negative values" to PanoManager:
+Red: (0.567968, 0.368446)
+Green: (0.30249, 0.64607)
+Blue: (0.1293, 0.006655)
+White: (0.34567, 0.3585) (D50)
+
+FIXME:  Retest this with the YUV fuzzer
