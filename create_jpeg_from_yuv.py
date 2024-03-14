@@ -54,7 +54,7 @@ for yidx in range(len(yvals)):
 
     imgdata = np.concatenate((np.reshape(ydata,w*h),np.reshape(udata,uw*uh),np.reshape(vdata,uw*uh)), dtype=np.uint8)
 
-    with open('IMG_{:02}_3.jpg'.format(yidx), 'wb') as outfile:
+    with open('IMG_{:02}_2.jpg'.format(yidx), 'wb') as outfile:
         outfile.write(jpeg.encode_from_yuv(imgdata, h, w, quality=99, jpeg_subsample=TJSAMP_420))
 
 udata = np.ones((uh, uw), dtype=np.uint8)*128
