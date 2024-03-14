@@ -93,9 +93,9 @@ with open(bin_file,'wb') as myfile:
         for lens in range(25):
             for exp in range(3):
                 if(typ == 0):
-                    fname = "{:02}_".format(lens) + str(exp) + "_preview.jpg"
+                    fname = "IMG_{:02}_".format(lens) + str(exp) + "_preview.jpg"
                 else:
-                    fname = "{:02}_".format(lens) + str(exp) + ".jpg"
+                    fname = "IMG_{:02}_".format(lens) + str(exp) + ".jpg"
                 filelen = get_filelen(fname)
                 filelens[lens][exp][typ] = filelen
                 fileptr = filetotal
@@ -110,9 +110,9 @@ with open(bin_file,'wb') as myfile:
         for lens in range(25):
             for exp in range(3):
                 if(typ == 0):
-                    fname = "{:02}_".format(lens) + str(exp) + "_preview.jpg"
+                    fname = "IMG_{:02}_".format(lens) + str(exp) + "_preview.jpg"
                 else:
-                    fname = "{:02}_".format(lens) + str(exp) + ".jpg"
+                    fname = "IMG_{:02}_".format(lens) + str(exp) + ".jpg"
                 with open(fname, 'rb') as jpgfile:
                     bulkread(jpgfile, myfile, myfile.tell(), filelens[lens][exp][typ])
 

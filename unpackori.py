@@ -113,9 +113,9 @@ for entrynum in range(int(tablelen/20)):
     (imgtype, lens, shot, fileoffset, filelen) = struct.unpack_from('<HHHxxxxxxLL', oritable, offset=tbloffset)
     filestart = imgstart + fileoffset
     if(imgtype == 1):
-        dest_fname = format(lens, '#02') + "_" + str(shot) + "_preview.jpg"
+        dest_fname = "IMG_" + format(lens, '#02') + "_" + str(shot) + "_preview.jpg"
     elif(imgtype == 2):
-        dest_fname = format(lens, '#02') + "_" + str(shot) + ".jpg"
+        dest_fname = "IMG_" + format(lens, '#02') + "_" + str(shot) + ".jpg"
     else:
         print("Unknown image type " + str(imgtype) + " found in ORI table in entry " + str(entrynum) + ", aborting")
         exit(-1)
