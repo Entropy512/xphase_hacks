@@ -1,71 +1,11 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
-import rawpy
-from turbojpeg import TurboJPEG
 import numpy as np
-import matplotlib.pyplot as plt
-import argparse
-import os
 
-jpeg = TurboJPEG()
-
-ap = argparse.ArgumentParser()
-ap.add_argument('-i', '--input', required=True,
-    help='path to input file')
-
-args = vars(ap.parse_args())
-ap_name = ap.prog #TODO: Determine if we care about this, rawpy did it but we don't really need it.
-
-filebase = os.path.splitext(args['input'])[0]
-dngname = filebase + '.dng'
-
-rawfile = rawpy.imread(dngname)
-
-jpgfile = open(args['input'], 'rb')
-planes = jpeg.decode_to_yuv_planes(jpgfile.read())
-yplane = planes[0]
-uplane = planes[1]
-vplane = planes[2]
-
-
-bayer_pattern = rawfile.raw_pattern
-print(bayer_pattern)
-raw_data = rawfile.raw_image_visible.astype('float64')
-#handling bayer currently useless for our primary purpose,
-#but might be useful for comparing ORI to input DNG later
-#instead of fuzzing PanoManager by feeding it synthetic JPGs
-
-if(bayer_pattern is not None):
-    iRrow,  iRclmn  = np.argwhere(bayer_pattern == 0)[0]
-    iG0row, iG0clmn = np.argwhere(bayer_pattern == 1)[0]
-    iBrow,  iBclmn  = np.argwhere(bayer_pattern == 2)[0]
-    iG1row, iG1clmn = np.argwhere(bayer_pattern == 3)[0]
-
-    R_raw  = raw_data[ iRrow::2,  iRclmn::2]
-    G_raw = raw_data[iG0row::2, iG0clmn::2]
-    #G1 = bayer_data[iG1row::2, iG1clmn::2]
-    B_raw  = raw_data[ iBrow::2,  iBclmn::2]
-else:
-    raw_data = raw_data[0:,0:,0:-1]
-    R_raw = raw_data[0:,0:,0]
-    G_raw = raw_data[0:,0:,1]
-    B_raw = raw_data[0:,0:,2]
-
-
-#we should check for nonequal shapes, but this is a very
-#specific data analysis script
-#h = jpgfile.shape[0]
-#w = jpgfile.shape[1]
-#lut = np.zeros(256)
-
-#for y in range(h):
-#    lut[R_jpg[y][0]] = R_raw[y][0]
-matrix_jpg2camrgb = np.array([[ 0.74222153,  0.14044039,  0.11733808],
-                              [ 0.20818888,  0.60000388,  0.19180724],
-                              [ 0.102492  ,  0.15562963,  0.74187837]])
-
-matrix_camrgb2srgb = np.linalg.inv(matrix_jpg2camrgb)
-
+# This was derived by feeding a white gradient (e.g. luminance only) to PanoManager
+# It's extremely accurate in the 23-229 range, but that doesn't work with
+# xphase's failed attempt to be clever and encode out-of-gamut colors with
+# negative values
 lut = np.array([1.0000e+00, 1.0000e+00, 1.0000e+00, 1.0000e+00, 1.0000e+00,
        1.0000e+00, 1.0000e+00, 1.0000e+00, 1.0000e+00, 1.0000e+00,
        1.0000e+00, 1.0000e+00, 1.0000e+00, 1.0000e+00, 1.0000e+00,
@@ -119,33 +59,21 @@ lut = np.array([1.0000e+00, 1.0000e+00, 1.0000e+00, 1.0000e+00, 1.0000e+00,
        6.5281e+04, 6.5281e+04, 6.5281e+04, 6.5281e+04, 6.5281e+04,
        6.5281e+04])
 
-#print(repr(lut))
-ilut = np.arange(0.0,65281.0,1.0)
-ilut_flor = np.digitize(ilut,lut,right=True)
+# 3800 is a very close fit of the transfer function to the LUT in the 23-229 range
+# but it isn't exact...  Xphase refuses to document their transfer function
+dc = 3800
 
+# These derive a and b based on the following assumptions:
+# linearizing 65281 always results in 229
+# linearizing 1 always results in 23
+def linearize_code(code,c=dc):
+    a = (np.log2(c+1) - np.log2(c + 65281))/-206
+    b = -np.log2(c+1) + 23*a
 
+    return np.power(2,(code*a-b))-c
 
-if(0):
-    plt.figure(1)
-    plt.imshow(np.power(np.matmul(jpg_expand,ccm)/65535.0,1/2.4))
-    plt.title('Corrected Input')
-    plt.figure(2)
-    plt.imshow(np.power(raw_data/65535.0,1/2.4))
-    plt.title('DNG with nonlinear transform')
-    plt.show()
-else:
-    plt.figure(1)
-    plt1 = plt.subplot(211)
-    plt1.plot(uplane[204*3,0::4], raw_data[408*3,0::8,0],'r')
-    plt1.plot(uplane[204*3,0::4], raw_data[408*4,0::8,1],'g')
-    plt1.plot(uplane[204*3,0::4], raw_data[408*3,0::8,2],'b')
-    plt2 = plt.subplot(212)
-    plt2.plot(vplane[204*3,0::4], raw_data[408*3,0::8,0],'r')
-    plt2.plot(vplane[204*3,0::4], raw_data[408*4,0::8,1],'g')
-    plt2.plot(vplane[204*3,0::4], raw_data[408*3,0::8,2],'b')
+def code_from_linear(lin, c=dc):
+    a = (np.log2(c+1) - np.log2(c + 65281))/-206
+    b = -np.log2(c+1) + 23*a
 
-    #plt.figure(2)
-    #plt.plot(jpgfile[0:,408*3,0],jpgfile[0:,408*3,0]/lkup_data[0:,408*3,0])
-    #plt.figure(3)
-    #plt.plot(R_raw/R_jpg)
-    plt.show()
+    return (np.log2(lin+c)+b)/a
