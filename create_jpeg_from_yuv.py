@@ -15,7 +15,8 @@ uw = w//2
 uh = h//2
 hald_level = 11
 
-yvals = np.floor(np.linspace(0,255,25)).astype(np.uint8)
+yvals = np.floor(np.linspace(0,255,24)).astype(np.uint8)
+yvals = np.arange(24).astype(np.uint8)*2
 for yidx in range(len(yvals)):
     y = yvals[yidx]
     ydata = np.ones((h,w),dtype=np.uint8)*y
@@ -57,11 +58,20 @@ for yidx in range(len(yvals)):
     with open('IMG_{:02}_2.jpg'.format(yidx), 'wb') as outfile:
         outfile.write(jpeg.encode_from_yuv(imgdata, h, w, quality=99, jpeg_subsample=TJSAMP_420))
 
-udata = np.ones((uh, uw), dtype=np.uint8)*128
-vdata = np.ones((uh, uw), dtype=np.uint8)*128
-ydata = (np.ones((h,w)) * np.floor(np.linspace(0,255, w))).astype(np.uint8)
+udata = (np.ones((uh, uw), dtype=np.uint8) * np.floor(np.linspace(0,255,uw))).astype(np.uint8)
+vdata = np.ones((uh, uw), dtype=np.uint8)*129
+ydata = (np.ones((h,w),dtype=np.uint8)) * np.floor(np.linspace(0,255, h)).astype(np.uint8)[:,np.newaxis]
 
 imgdata = np.concatenate((np.reshape(ydata,w*h),np.reshape(udata,uw*uh),np.reshape(vdata,uw*uh)), dtype=np.uint8)
 
-with open('grayband.jpg', 'wb') as outfile:
+with open('IMG_24_0.jpg', 'wb') as outfile:
+    outfile.write(jpeg.encode_from_yuv(imgdata, h, w, quality=99, jpeg_subsample=TJSAMP_420))
+
+udata = np.ones((uh, uw), dtype=np.uint8)*129
+vdata = (np.ones((uh, uw), dtype=np.uint8) * np.floor(np.linspace(0,255,uw))).astype(np.uint8)
+ydata = (np.ones((h,w),dtype=np.uint8)) * np.floor(np.linspace(0,255, h)).astype(np.uint8)[:,np.newaxis]
+
+imgdata = np.concatenate((np.reshape(ydata,w*h),np.reshape(udata,uw*uh),np.reshape(vdata,uw*uh)), dtype=np.uint8)
+
+with open('IMG_24_1.jpg', 'wb') as outfile:
     outfile.write(jpeg.encode_from_yuv(imgdata, h, w, quality=99, jpeg_subsample=TJSAMP_420))
