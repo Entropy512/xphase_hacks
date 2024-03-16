@@ -59,6 +59,9 @@ lut = np.array([1.0000e+00, 1.0000e+00, 1.0000e+00, 1.0000e+00, 1.0000e+00,
        6.5281e+04, 6.5281e+04, 6.5281e+04, 6.5281e+04, 6.5281e+04,
        6.5281e+04])
 
+ilut = np.arange(0.0,65282.0,1.0)
+ilut_flor = np.digitize(ilut,lut,right=True)
+
 # 3800 is a very close fit of the transfer function to the LUT in the 23-229 range
 # but it isn't exact...  Xphase refuses to document their transfer function
 dc = 3800
