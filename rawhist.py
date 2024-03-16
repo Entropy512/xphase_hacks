@@ -37,14 +37,15 @@ if(bayer_pattern is not None):
     raw_data[0:,0:,1] = (G + G1)/2
     raw_data[0:,0:,2] = B
 else:
-    bayer_data = bayer_data[920:1652, 1424:1952,:]
+    #bayer_data = bayer_data[920:1652, 1424:1952,:]
     R = bayer_data[0:,0:,0]
     G = bayer_data[0:,0:,1]
     B = bayer_data[0:,0:,2]
-    raw_data = bayer_data[0::2,0::2,0:3]
+    raw_data = bayer_data[0::4,0::4,0:3]
 
 #raw_data = raw_data[0::2, 0::2, :]
 
+#DNG color matrix
 color_matrix_raw = np.matrix([[1.69266987, -0.5626429913, -0.08418130087],
                               [-0.3848780093, 1.108350039, 0.3184210059],
                               [-0.0598646994, 0.1917970028, 1.04934001]])
@@ -53,11 +54,20 @@ primaries_raw = colour.primaries_whitepoint(invmatrix_raw)[0]
 whitepoint_raw = colour.primaries_whitepoint(invmatrix_raw)[1]
 colorspace_raw = colour.models.RGB_Colourspace('RAW color space', primaries_raw, whitepoint_raw, use_derived_matrix_RGB_to_XYZ=True, use_derived_matrix_XYZ_to_RGB=True)
 
+#Where the heck did I get this from???
+#Linearizing Zwikel's colorchecker shot and then dcamprofing it???
+#Or tracing the borders of a HALD-derived DNG that has no values below 23?
 primaries_jpeg = np.array([[0.567968, 0.368446],
                            [0.30249, 0.64607],
                            [0.1293, 0.006655]])
 whitepoint_jpeg = np.array([0.34567, 0.3585])
 colorspace_jpeg = colour.models.RGB_Colourspace('JPEG color space', primaries_jpeg, whitepoint_jpeg, use_derived_matrix_RGB_to_XYZ=True, use_derived_matrix_XYZ_to_RGB=True)
+
+#An attempt to derive a "scaled" colorspace by moving primaries closer to the white point
+#Extremely close match to a reverse engineered matrix for values that aren't in the low-luminance "negative numbers appear to be in play" zone
+xpswht = whitepoint_raw
+xpsprim = (primaries_raw-whitepoint_raw)*0.5 + whitepoint_raw
+xphasescl_cs = colour.models.RGB_Colourspace('XPhase Scale', xpsprim, xpswht, use_derived_matrix_RGB_to_XYZ=True, use_derived_matrix_XYZ_to_RGB=True)
 
 raw_to_jpeg_matrix = colour.matrix_RGB_to_RGB(colorspace_raw, colorspace_jpeg)
 
@@ -109,8 +119,8 @@ else:
     raw_data = raw_data[lumidx]
     lum_data = lum_data[lumidx]
     print(lum_data.shape)
-    cplot = colour.plotting.plot_RGB_chromaticities_in_chromaticity_diagram_CIE1931(raw_data,colourspace=colorspace_raw,scatter_kwargs={'s':1,'c':lum_data},standalone=False)
-    cplot = colour.plotting.plot_RGB_colourspaces_in_chromaticity_diagram_CIE1931([colorspace_raw, colorspace_jpeg, colour.models.RGB_COLOURSPACE_sRGB],axes=cplot[1],standalone=False)
+    cplot = colour.plotting.plot_RGB_chromaticities_in_chromaticity_diagram_CIE1931(raw_data,colourspace=colorspace_raw,scatter_kwargs={'s':1,'c':lum_data},show=False)
     cplot[0].colorbar(cplot[1].collections[2],ax=cplot[1])
-    cplot = colour.plotting.plot_planckian_locus_in_chromaticity_diagram_CIE1931(['A','D50','D65'],axes=cplot[1],standalone=False)
+    cplot = colour.plotting.plot_planckian_locus_in_chromaticity_diagram_CIE1931(['A','D50','D65'],axes=cplot[1],show=False)
+    cplot = colour.plotting.plot_RGB_colourspaces_in_chromaticity_diagram_CIE1931([colorspace_raw, colorspace_jpeg, xphasescl_cs, colour.models.RGB_COLOURSPACE_sRGB],axes=cplot[1],show=False)
     plt.show()
