@@ -14,7 +14,7 @@ h = 2448
 hald_level = 11
 
 imgdata = np.ones((h,w,3),dtype=np.uint8)*20
-mode = 1
+mode = 2
 match mode:
     case 0:
         for y in range(h):
@@ -39,6 +39,11 @@ match mode:
                     imgdata[y][x] = [0, 0, val]
 
     case 2:
+        for y in range(h):
+            val = 0 + int(np.floor(((256.0-0.0)*y)/h))
+            imgdata[y][:] = [val,val,val]
+
+    case 3:
         haldsq = hald_level**2
         print(haldsq)
         hald_mod = int(np.floor(3264/(2*haldsq)))
