@@ -9,15 +9,18 @@ import matplotlib.pyplot as plt
 
 jpeg = TurboJPEG()
 
-xpmatrix = np.matrix([[1.69266987, -0.5626429913, -0.08418130087],
-                      [-0.3848780093, 1.108350039, 0.3184210059],
-                      [-0.0598646994, 0.1917970028, 1.04934001]])
 
-xpmatrix_inv = np.linalg.inv(xpmatrix)
-xpprim = colour.primaries_whitepoint(xpmatrix_inv)[0]
-xpwht = colour.primaries_whitepoint(xpmatrix_inv)[1]
-xphase_cs = colour.models.RGB_Colourspace('XPhase', xpprim, xpwht, use_derived_matrix_RGB_to_XYZ=True, use_derived_matrix_XYZ_to_RGB=True)
+xpdmatrix = np.matrix([[1.69266987, -0.5626429913, -0.08418130087],
+                    [-0.3848780093, 1.108350039, 0.3184210059],
+                    [-0.0598646994, 0.1917970028, 1.04934001]])
 
+xpdmatrix_inv = np.linalg.inv(xpdmatrix)
+xpdprim = colour.primaries_whitepoint(xpdmatrix_inv)[0]
+xpdwht = colour.primaries_whitepoint(xpdmatrix_inv)[1]
+print(xpdprim)
+xphasedng_cs = colour.models.RGB_Colourspace('XPhase DNG', xpdprim, xpdwht, use_derived_matrix_RGB_to_XYZ=True, use_derived_matrix_XYZ_to_RGB=True)
+
+#colour.plotting.plot_RGB_colourspaces_in_chromaticity_diagram_CIE1931(colourspaces=[xphasedng_cs])
 d65_whitepoint = np.array([0.3127, 0.3290])
 srgb_prim = np.array([0.64, 0.33,
                       0.30, 0.60,
@@ -25,24 +28,30 @@ srgb_prim = np.array([0.64, 0.33,
 
 srgb_cs = colour.models.RGB_Colourspace('sRGB', srgb_prim, d65_whitepoint, use_derived_matrix_RGB_to_XYZ=True, use_derived_matrix_XYZ_to_RGB=True)
 
-cnvmatrix = colour.matrix_RGB_to_RGB(xphase_cs, srgb_cs, chromatic_adaptation_transform=u'CAT02')
-if(1):
-    #xphase color matrix
-    Kr = xpmatrix_inv[1,0]
-    Kg = xpmatrix_inv[1,1]
-    Kb = xpmatrix_inv[1,2]
-else:
-    #BT.601
-    Kr = 0.299
-    Kg = 0.587
-    Kb = 0.114
+dng_cmat = np.array([[ 0.74154849,  0.20734154,  0.10171785],
+                    [ 0.14347096,  0.62066485,  0.15853842],
+                    [ 0.11812658,  0.19156313,  0.73891836]])
+xpjmatrix_inv = np.matmul(xpdmatrix_inv, dng_cmat)
+xpjprim = colour.primaries_whitepoint(xpjmatrix_inv)[0]
+xpjwht = colour.primaries_whitepoint(xpjmatrix_inv)[1]
+print(xpjprim)
+xphasejpg_cs = colour.models.RGB_Colourspace('XPhase JPG', xpjprim, xpjwht, use_derived_matrix_RGB_to_XYZ=True, use_derived_matrix_XYZ_to_RGB=True)
 
-yuv_rgb_matrix = np.array([[1.0, 0.0, 2 - 2*Kr],
-                            [1.0, -Kb*(2 - 2*Kb)/Kg, -Kr*(2 - 2*Kr)/Kg],
-                            [1.0, 2 - 2*Kb, 0.0]])
+xpswht = xpdwht
+xpsprim = (xpdprim-xpdwht)*0.5 + xpdwht
+xphasescl_cs = colour.models.RGB_Colourspace('XPhase Scale', xpsprim, xpswht, use_derived_matrix_RGB_to_XYZ=True, use_derived_matrix_XYZ_to_RGB=True)
 
-print(yuv_rgb_matrix)
-#linearization LUT determined by feeding PanoManager synthetic JPEGs
+#Where the heck did I get this from???
+#Linearizing Zwikel's colorchecker shot and then dcamprofing it???
+primaries_jpeg = np.array([[0.567968, 0.368446],
+                           [0.30249, 0.64607],
+                           [0.1293, 0.006655]])
+whitepoint_jpeg = np.array([0.34567, 0.3585])
+colorspace_jpeg = colour.models.RGB_Colourspace('JPEG color space', primaries_jpeg, whitepoint_jpeg, use_derived_matrix_RGB_to_XYZ=True, use_derived_matrix_XYZ_to_RGB=True)
+
+cplot = cplot = colour.plotting.plot_planckian_locus_in_chromaticity_diagram_CIE1931(['A','D50','D65'],standalone=False)
+colour.plotting.plot_RGB_colourspaces_in_chromaticity_diagram_CIE1931(axes=cplot[1], colourspaces=[xphasejpg_cs, xphasedng_cs, xphasescl_cs, colorspace_jpeg])
+plt.show()
 
 lut = np.array([1.0000e+00, 1.0000e+00, 1.0000e+00, 1.0000e+00, 1.0000e+00,
        1.0000e+00, 1.0000e+00, 1.0000e+00, 1.0000e+00, 1.0000e+00,
