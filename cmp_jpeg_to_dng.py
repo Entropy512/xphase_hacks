@@ -9,7 +9,7 @@ import argparse
 import os
 import colour
 from pprint import pprint
-import xphase_transfer
+from xphase_data import XphaseTransfer
 
 jpeg = TurboJPEG()
 
@@ -65,8 +65,8 @@ else:
 # FIXME: handle this automatically
 # raw_data = np.fliplr(np.flipud(raw_data))
 
-
-lut = xphase_transfer.lut
+xt = XphaseTransfer()
+lut = xt.lut
 
 print(np.amin(yplane))
 print(np.amax(yplane))
@@ -205,7 +205,7 @@ match mode:
             plt.plot(rgbdata[0::8,int((w/3)*i + w/6), 1], rdslice[:,1],'g')
             plt.plot(rgbdata[0::8,int((w/3)*i + w/6), 2], rdslice[:,2],'b')
             x = np.linspace(0,255,2000)
-            plt.plot(x, xphase_transfer.linearize_code(x), 'k')
+            plt.plot(x, xt.linearize_code(x), 'k')
             
 
         w6 = int(w/6)

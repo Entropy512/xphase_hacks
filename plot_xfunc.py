@@ -2,13 +2,13 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-import xphase_transfer
+from xphase_data import XphaseTransfer
 
-dta = [xphase_transfer.lut]
+dta = [XphaseTransfer().lut]
 
 codes = np.arange(256)
 for c in [3231, 3600, 3800, 4000]:
-    dta.append(xphase_transfer.linearize_code(codes,c))
+    dta.append(XphaseTransfer(c).linearize_code(codes))
 
 for p in dta:
     plt.plot(p)
