@@ -61,9 +61,10 @@ else:
     G_raw = raw_data[0:,0:,1]
     B_raw = raw_data[0:,0:,2]
 
-# It seems like every third lens is flipped left/right and up/down by PanoManager
-# FIXME: handle this automatically
-# raw_data = np.fliplr(np.flipud(raw_data))
+# It seems like every lens except 00, 01, 23, 24 are flipped upside down by PanoManager
+(garbage, lensnum, shotnum) = filebase.split("_",3)
+if int(lensnum) not in [0, 1, 23, 24]:
+    raw_data = np.fliplr(np.flipud(raw_data))
 
 xt = XphaseTransfer()
 lut = xt.lut
