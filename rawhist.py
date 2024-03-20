@@ -41,7 +41,7 @@ else:
     R = bayer_data[0:,0:,0]
     G = bayer_data[0:,0:,1]
     B = bayer_data[0:,0:,2]
-    raw_data = bayer_data[0::4,0::4,0:3]
+    raw_data = bayer_data[:,:,0:3]
 
 #raw_data = raw_data[0::2, 0::2, :]
 
@@ -82,45 +82,60 @@ print(np.count_nonzero(bhist))
 raw_data = raw_data/65535.0
 print(raw_data.shape)
 print(raw_data[...,0].shape)
-if(0):
-    #bayer_data = bayer_data[0::2,0::2,0:]
 
-    plt1 = plt.subplot(311)
-    plt1.semilogy(rhist,'r', label='Red histogram')
-    plt2 = plt.subplot(312, sharex=plt1)
-    plt2.semilogy(ghist,'g', label='Green histogram')
-    plt3 = plt.subplot(313, sharex=plt1)
-    plt3.semilogy(bhist,'b', label='Blue histogram')
+mode = 3
+match mode:
+    case 0:
+        #bayer_data = bayer_data[0::2,0::2,0:]
 
-    plt.show()
-elif(0):
-    jpeg_data = np.matmul(raw_data,raw_to_jpeg_matrix.T)
-    print(jpeg_data.shape)
-    plt.figure(1)
-    plt1 = plt.subplot(311)
-    plt1.plot(jpeg_data[0:, 272,0],'r')
-    plt1.plot(jpeg_data[0:, 272,1],'g')
-    plt1.plot(jpeg_data[0:, 272,2],'b')
-    plt2 = plt.subplot(312,sharex=plt1)
-    plt2.plot(jpeg_data[0:,272*3,0],'r')
-    plt2.plot(jpeg_data[0:,272*3,1],'g')
-    plt2.plot(jpeg_data[0:,272*3,2],'b')
-    plt3 = plt.subplot(313,sharex=plt1)
-    plt3.plot(jpeg_data[0:,272*5,0],'r')
-    plt3.plot(jpeg_data[0:,272*5,1],'g')
-    plt3.plot(jpeg_data[0:,272*5,2],'b')
-    plt.show()
-else:
-    #raw_data = raw_data[0:,272::544,0:]
-    raw_data = np.reshape(raw_data,(raw_data.shape[0]*raw_data.shape[1],raw_data.shape[2]))
-    print(raw_data.shape)
-    lum_data = np.power(np.amax(raw_data,axis=1),1/2.4)
-    lumidx = np.argsort(lum_data)
-    raw_data = raw_data[lumidx]
-    lum_data = lum_data[lumidx]
-    print(lum_data.shape)
-    cplot = colour.plotting.plot_RGB_chromaticities_in_chromaticity_diagram_CIE1931(raw_data,colourspace=colorspace_raw,scatter_kwargs={'s':1,'c':lum_data},show=False)
-    cplot[0].colorbar(cplot[1].collections[2],ax=cplot[1])
-    cplot = colour.plotting.plot_planckian_locus_in_chromaticity_diagram_CIE1931(['A','D50','D65'],axes=cplot[1],show=False)
-    cplot = colour.plotting.plot_RGB_colourspaces_in_chromaticity_diagram_CIE1931([colorspace_raw, colorspace_jpeg, xphasescl_cs, colour.models.RGB_COLOURSPACE_sRGB],axes=cplot[1],show=False)
-    plt.show()
+        plt1 = plt.subplot(311)
+        plt1.semilogy(rhist,'r', label='Red histogram')
+        plt2 = plt.subplot(312, sharex=plt1)
+        plt2.semilogy(ghist,'g', label='Green histogram')
+        plt3 = plt.subplot(313, sharex=plt1)
+        plt3.semilogy(bhist,'b', label='Blue histogram')
+
+        plt.show()
+    case 1:
+        jpeg_data = np.matmul(raw_data,raw_to_jpeg_matrix.T)
+        print(jpeg_data.shape)
+        plt.figure(1)
+        plt1 = plt.subplot(311)
+        plt1.plot(jpeg_data[0:, 272,0],'r')
+        plt1.plot(jpeg_data[0:, 272,1],'g')
+        plt1.plot(jpeg_data[0:, 272,2],'b')
+        plt2 = plt.subplot(312,sharex=plt1)
+        plt2.plot(jpeg_data[0:,272*3,0],'r')
+        plt2.plot(jpeg_data[0:,272*3,1],'g')
+        plt2.plot(jpeg_data[0:,272*3,2],'b')
+        plt3 = plt.subplot(313,sharex=plt1)
+        plt3.plot(jpeg_data[0:,272*5,0],'r')
+        plt3.plot(jpeg_data[0:,272*5,1],'g')
+        plt3.plot(jpeg_data[0:,272*5,2],'b')
+        plt.show()
+    case 2:
+        #raw_data = raw_data[0:,272::544,0:]
+        raw_data = np.reshape(raw_data,(raw_data.shape[0]*raw_data.shape[1],raw_data.shape[2]))
+        print(raw_data.shape)
+        lum_data = np.power(np.amax(raw_data,axis=1),1/2.4)
+        lumidx = np.argsort(lum_data)
+        raw_data = raw_data[lumidx]
+        lum_data = lum_data[lumidx]
+        print(lum_data.shape)
+        cplot = colour.plotting.plot_RGB_chromaticities_in_chromaticity_diagram_CIE1931(raw_data,colourspace=colorspace_raw,scatter_kwargs={'s':1,'c':lum_data},show=False)
+        cplot[0].colorbar(cplot[1].collections[2],ax=cplot[1])
+        cplot = colour.plotting.plot_planckian_locus_in_chromaticity_diagram_CIE1931(['A','D50','D65'],axes=cplot[1],show=False)
+        cplot = colour.plotting.plot_RGB_colourspaces_in_chromaticity_diagram_CIE1931([colorspace_raw, colorspace_jpeg, colour.models.RGB_COLOURSPACE_sRGB],axes=cplot[1],show=False)
+        plt.show()
+    case 3:
+        w = raw_data.shape[1]
+        border = 4
+        skip = int(w/4)
+        data = []
+        for k in range(4):
+            region = raw_data[border:-border,k*skip+border:(k+1)*skip-border]
+            data.append(np.mean(np.mean(region, axis=0), axis=0))
+        data = np.array(data)
+        print(data)
+        print(colour.RGB_to_XYZ(RGB=data, colourspace=colorspace_raw))
+        print(colour.XYZ_to_xy(colour.RGB_to_XYZ(RGB=data, colourspace=colorspace_raw)))
