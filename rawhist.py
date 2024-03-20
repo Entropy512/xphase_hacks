@@ -61,14 +61,6 @@ primaries_jpeg = np.array([[0.56798193, 0.36842969],
 whitepoint_jpeg = np.array([0.34566994, 0.35849447])
 colorspace_jpeg = colour.models.RGB_Colourspace('JPEG color space', primaries_jpeg, whitepoint_jpeg, use_derived_matrix_RGB_to_XYZ=True, use_derived_matrix_XYZ_to_RGB=True)
 
-#An attempt to derive a "scaled" colorspace by moving primaries closer to the white point
-#Extremely close match to a reverse engineered matrix for values that aren't in the low-luminance "negative numbers appear to be in play" zone
-xpswht = whitepoint_raw
-xpsprim = (primaries_raw-whitepoint_raw)*0.5 + whitepoint_raw
-xphasescl_cs = colour.models.RGB_Colourspace('XPhase Scale', xpsprim, xpswht, use_derived_matrix_RGB_to_XYZ=True, use_derived_matrix_XYZ_to_RGB=True)
-
-raw_to_jpeg_matrix = colour.matrix_RGB_to_RGB(colorspace_raw, colorspace_jpeg)
-
 rhist = np.histogram(R, 65536, range=(0,65535))[0]
 ghist = np.histogram(G, 65536, range=(0,65535))[0]
 bhist = np.histogram(B, 65536, range=(0,65535))[0]
