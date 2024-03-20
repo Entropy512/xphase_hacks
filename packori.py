@@ -44,6 +44,14 @@ ap = argparse.ArgumentParser()
 ap.add_argument('-o', '--output', required=True,
     help='path to input file')
 
+# FIXME:  Find a way to get this from the original file bins that is better
+# than analyzing the original oritable
+ap.add_argument('-b', '--bracketcount', help='Shot bracket count (3 or 6)',
+                default=3, type=int, choices=[3,6])
+
+# FIXME:  Find a way to get this from the original file bins too
+ap.add_argument('-n', '--usernadir', help='Look for and add a user nadir block', action='store_true')
+
 args = vars(ap.parse_args())
 bin_file = args['output']
 bracket_count = args['bracketcount']
@@ -103,14 +111,14 @@ with open(bin_file,'wb') as myfile:
     #Write out ORI table.  We always go in a deterministic order
     #but we do need to cache file lengths in the table unless we want to re-get the
     #lengths
-    imgdata_start = myfile.tell() + 3012
-    tbllen = 3000 # 3-shot
+    imgdata_start = myfile.tell() + 12+1000*bracket_count
+    tbllen = 1000*bracket_count
     myfile.write(struct.pack('<hL', -39, tbllen))
-    filelens = np.zeros((25,3,2),dtype=np.int32)
+    filelens = np.zeros((25,bracket_count,2),dtype=np.int32)
     filetotal = 0
     for typ in range(2):
         for lens in range(25):
-            for exp in range(3):
+            for exp in range(bracket_count):
                 if(typ == 0):
                     fname = "IMG_{:02}_".format(lens) + str(exp) + "_preview.jpg"
                 else:
@@ -127,7 +135,7 @@ with open(bin_file,'wb') as myfile:
     myfile.write(struct.pack('<hL', -45, filetotal))
     for typ in range(2):
         for lens in range(25):
-            for exp in range(3):
+            for exp in range(bracket_count):
                 if(typ == 0):
                     fname = "IMG_{:02}_".format(lens) + str(exp) + "_preview.jpg"
                 else:
@@ -140,3 +148,10 @@ with open(bin_file,'wb') as myfile:
         prvlen = prvfile.tell()
         myfile.write(struct.pack('<hL',-46, prvlen))
         bulkread(prvfile, myfile, myfile.tell(), prvlen)
+
+    if(args['usernadir']):
+        with open('usernadir.jpg', 'rb') as prvfile:
+            prvfile.seek(0,os.SEEK_END)
+            prvlen = prvfile.tell()
+            myfile.write(struct.pack('<hL',-43, prvlen))
+            bulkread(prvfile, myfile, myfile.tell(), prvlen)
