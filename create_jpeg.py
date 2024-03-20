@@ -39,11 +39,17 @@ match mode:
                     imgdata[y][x] = [0, 0, val]
 
     case 2:
+        imgdata[:,0:int(w/4)] = [23, 23, 229]
+        imgdata[:,int(w/4):int(2*w/4)] = [23, 229, 23]
+        imgdata[:,int(2*w/4):int(3*w/4)] = [229, 23, 23]
+        imgdata[:,int(3*w/4):] = [229, 229, 229]
+
+    case 3:
         for y in range(h):
             val = 0 + int(np.floor(((256.0-0.0)*y)/h))
             imgdata[y][:] = [val,val,val]
 
-    case 3:
+    case 4:
         haldsq = hald_level**2
         print(haldsq)
         hald_mod = int(np.floor(3264/(2*haldsq)))
