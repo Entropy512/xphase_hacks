@@ -65,11 +65,6 @@ if(len(hms) != 3):
 
 datelist = [int(i) for i in (ymd+hms)]
 
-#with open(bin_file,'rb') as myfile:
-#    for j in range(25):
-#        myfile.seek(0x434+3080*j)
-#        idx = myfile.read(2)
-#        print(hex(struct.unpack('<H',idx)[0]))
 
 with open(bin_file,'wb') as myfile:
     blocknum = 0
