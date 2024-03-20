@@ -21,7 +21,7 @@
 # https://stackoverflow.com/questions/2363483/python-slicing-a-very-large-binary-file
 
 import os
-import sys
+import argparse
 import struct
 import numpy as np
 
@@ -40,11 +40,12 @@ def get_filelen(fname):
         file_len = checkfile.tell()
         return file_len
 
-if(len(sys.argv) < 2):
-    print("Too few arguments")
-    exit(-1)
+ap = argparse.ArgumentParser()
+ap.add_argument('-o', '--output', required=True,
+    help='path to input file')
 
-bin_file = sys.argv[1]
+args = vars(ap.parse_args())
+bin_file = args['output']
 
 #with open(bin_file,'rb') as myfile:
 #    for j in range(25):
