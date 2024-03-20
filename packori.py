@@ -46,6 +46,24 @@ ap.add_argument('-o', '--output', required=True,
 
 args = vars(ap.parse_args())
 bin_file = args['output']
+bracket_count = args['bracketcount']
+
+# ORIs must be of a specific format, and the date in the header must match the date encoded in the filename
+# Extract the year,month,day,hours,minutes,seconds from the file name
+(filebase,fileext) = bin_file.rsplit('.',1)
+if(fileext != 'ori'):
+    exit('File must end in .ori')
+datetime = filebase.split('_')
+if(len(datetime) != 2):
+    exit('File must be of the form YYYY-MM-DD_HH.MM.SS.ori')
+ymd = datetime[0].split('-')
+if(len(ymd) != 3):
+    exit('File must be of the form YYYY-MM-DD_HH.MM.SS.ori')
+hms = datetime[1].split('.')
+if(len(hms) != 3):
+    exit('File must be of the form YYYY-MM-DD_HH.MM.SS.ori')
+
+datelist = [int(i) for i in (ymd+hms)]
 
 #with open(bin_file,'rb') as myfile:
 #    for j in range(25):
@@ -63,7 +81,12 @@ with open(bin_file,'wb') as myfile:
         if(hdrlen != 256):
             raise("Header length not 256 - not supported!")
         myfile.write(struct.pack('<hL',-48, hdrlen))
-        bulkread(hdrfile, myfile, myfile.tell(), hdrlen)
+        hdrstart = myfile.tell()
+        bulkread(hdrfile, myfile, hdrstart, hdrlen)
+        #Write the date which matches the filename to the appropriate location in the header
+        myfile.seek(hdrstart+8)
+        myfile.write(struct.pack('<LLLLLL',*datelist))
+        myfile.seek(0,os.SEEK_END)
 
     with open('smallblock.bin', 'rb') as sbfile:
         sbfile.seek(0,os.SEEK_END)
