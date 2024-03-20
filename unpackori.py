@@ -65,7 +65,7 @@ with open(bin_file,'rb') as myfile:
               " with length " + str(nbytes) + " at offset " + hex(cur_offset + 6))
 
         if(blocktype == -48):
-            print("\tUnknown file header data")
+            print("\tFile header data")
             if(args['dateheader']):
                 hfilename = 'headerdata_'+filebase+'.bin'
             else:
@@ -74,6 +74,16 @@ with open(bin_file,'rb') as myfile:
                 myfile.seek(cur_offset + 6)
                 headerfile.write(myfile.read(nbytes))
 
+        # Everything appears to be stored as signed or maybe unsigned int32
+        # Date is year, month, day, hour, minute, second starting at offset 8
+        # 0x38 appears to be proportional to exposure time, but has different meaning whether HDR3 or HDR6
+        # shuttertime * 7680 for HDR6
+        # shuttertime * 30840 for HDR3
+        # 0x44 is ISO/6.25
+        # Offset 0x68 = EV offset divided by 3
+        # 0x70 = 2 for HDR3, 4 for HDR6, but not the only thing that is used to differentiate.  Repacking as 3-shot without changing this will cause PM to ignore the file
+        #   but changing this and repacking will cause PM to recognize the file, but still display as HDR6 and fail to stitch
+        # 
         elif(blocktype == -40):
             print("\tSmall lens data blocks (32 bytes per lens)")
             with open('smallblock.bin', 'wb') as smallblockfile:
