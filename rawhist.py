@@ -54,13 +54,11 @@ primaries_raw = colour.primaries_whitepoint(invmatrix_raw)[0]
 whitepoint_raw = colour.primaries_whitepoint(invmatrix_raw)[1]
 colorspace_raw = colour.models.RGB_Colourspace('RAW color space', primaries_raw, whitepoint_raw, use_derived_matrix_RGB_to_XYZ=True, use_derived_matrix_XYZ_to_RGB=True)
 
-#Where the heck did I get this from???
-#Linearizing Zwikel's colorchecker shot and then dcamprofing it???
-#Or tracing the borders of a HALD-derived DNG that has no values below 23?
-primaries_jpeg = np.array([[0.567968, 0.368446],
-                           [0.30249, 0.64607],
-                           [0.1293, 0.006655]])
-whitepoint_jpeg = np.array([0.34567, 0.3585])
+#Derived from feeding create_jpeg mode 2 (black = 23, white=229) to rawhist mode 3
+primaries_jpeg = np.array([[0.56798193, 0.36842969],
+                            [0.30254015, 0.64607483],
+                            [0.12929368, 0.00665573]])
+whitepoint_jpeg = np.array([0.34566994, 0.35849447])
 colorspace_jpeg = colour.models.RGB_Colourspace('JPEG color space', primaries_jpeg, whitepoint_jpeg, use_derived_matrix_RGB_to_XYZ=True, use_derived_matrix_XYZ_to_RGB=True)
 
 #An attempt to derive a "scaled" colorspace by moving primaries closer to the white point
