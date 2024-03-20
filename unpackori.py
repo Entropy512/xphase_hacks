@@ -38,8 +38,12 @@ ap = argparse.ArgumentParser()
 ap.add_argument('-i', '--input', required=True,
     help='path to input file')
 
+ap.add_argument('-d', '--dateheader', action='store_true')
+
 args = vars(ap.parse_args())
 bin_file = args['input']
+
+(filebase, ext) = bin_file.rsplit('.',1)
 
 #with open(bin_file,'rb') as myfile:
 #    for j in range(25):
@@ -62,7 +66,11 @@ with open(bin_file,'rb') as myfile:
 
         if(blocktype == -48):
             print("\tUnknown file header data")
-            with open('headerdata.bin', 'wb') as headerfile:
+            if(args['dateheader']):
+                hfilename = 'headerdata_'+filebase+'.bin'
+            else:
+                hfilename = 'headerdata.bin'
+            with open(hfilename, 'wb') as headerfile:
                 myfile.seek(cur_offset + 6)
                 headerfile.write(myfile.read(nbytes))
 
