@@ -21,7 +21,7 @@
 # https://stackoverflow.com/questions/2363483/python-slicing-a-very-large-binary-file
 
 import os
-import sys
+import argparse
 import struct
 
 def copypart(src,dest,start,length,bufsize=1024*1024):
@@ -34,11 +34,12 @@ def copypart(src,dest,start,length,bufsize=1024*1024):
                 f2.write(data)
                 length -= chunk
 
-if(len(sys.argv) < 2):
-    print("Too few arguments")
-    exit(-1)
+ap = argparse.ArgumentParser()
+ap.add_argument('-i', '--input', required=True,
+    help='path to input file')
 
-bin_file = sys.argv[1]
+args = vars(ap.parse_args())
+bin_file = args['input']
 
 #with open(bin_file,'rb') as myfile:
 #    for j in range(25):
