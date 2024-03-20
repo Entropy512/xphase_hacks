@@ -119,7 +119,8 @@ for entrynum in range(int(tablelen/20)):
     else:
         print("Unknown image type " + str(imgtype) + " found in ORI table in entry " + str(entrynum) + ", aborting")
         exit(-1)
-    copypart(bin_file, dest_fname, filestart, filelen)
+    if(filelen > 0):
+        copypart(bin_file, dest_fname, filestart, filelen)
 
 #FIXME:  We are currently ignoring the last image in the ORI.  It's probably SOME sort of preview.
 #We should append the file size as the last entry in the list of occurances so the code below can handle it
