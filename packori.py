@@ -42,7 +42,7 @@ def get_filelen(fname):
 
 ap = argparse.ArgumentParser()
 ap.add_argument('-o', '--output', required=True,
-    help='path to input file')
+    help='path to output file')
 
 # FIXME:  Find a way to get this from the original file bins that is better
 # than analyzing the original oritable
