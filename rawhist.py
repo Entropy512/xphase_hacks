@@ -5,6 +5,7 @@ import colour
 import numpy as np
 import matplotlib.pyplot as plt
 import sys
+from pprint import pprint
 
 rawfile = rawpy.imread(sys.argv[1])
 
@@ -61,6 +62,23 @@ primaries_jpeg = np.array([[0.56798193, 0.36842969],
 whitepoint_jpeg = np.array([0.34566994, 0.35849447])
 colorspace_jpeg = colour.models.RGB_Colourspace('JPEG color space', primaries_jpeg, whitepoint_jpeg, use_derived_matrix_RGB_to_XYZ=True, use_derived_matrix_XYZ_to_RGB=True)
 
+# Derived from feeding create_jpeg mode 2 (black = 0, white=48) to rawhist mode 3
+# code value 48 is approximately where Xphase's transfer function transitions the human 5% luminance difference threshold for
+# dim areas (see page 7 of https://downloads.bbc.co.uk/rd/pubs/whp/whp-pdf-files/WHP309.pdf )
+primaries_5pjpeg = np.array([[0.74342915, 0.26049418],
+                            [0.2797885, 0.86006897],
+                            [-0.07825801, -0.47043385]])
+whitepoint_5pjpeg = np.array([0.34483413, 0.36421049])
+colorspace_5pjpeg = colour.models.RGB_Colourspace('Wide JPEG color space, 5%BT', primaries_5pjpeg, whitepoint_5pjpeg, use_derived_matrix_RGB_to_XYZ=True, use_derived_matrix_XYZ_to_RGB=True)
+
+# Derived from feeding create_jpeg mode 2 (black = 0, white = somewhere between 110 and 140, I can't remember) to rawhist mode 3
+# corresponds to 2% luminance difference which is the human banding threshold for bright areas
+primaries_2pjpeg = np.array([[ 0.63250848,  0.37111425],
+       [ 0.29017827,  0.7297941 ],
+       [ 0.04997669, -0.12299537]])
+whitepoint_2pjpeg = np.array([ 0.34509653,  0.36231756])
+colorspace_2pjpeg = colour.models.RGB_Colourspace('Wide JPEG color space, 2%BT', primaries_2pjpeg, whitepoint_2pjpeg, use_derived_matrix_RGB_to_XYZ=True, use_derived_matrix_XYZ_to_RGB=True)
+
 rhist = np.histogram(R, 65536, range=(0,65535))[0]
 ghist = np.histogram(G, 65536, range=(0,65535))[0]
 bhist = np.histogram(B, 65536, range=(0,65535))[0]
@@ -69,7 +87,7 @@ print(np.count_nonzero(rhist))
 print(np.count_nonzero(ghist))
 print(np.count_nonzero(bhist))
 
-raw_data = raw_data/65535.0
+
 print(raw_data.shape)
 print(raw_data[...,0].shape)
 
@@ -126,6 +144,8 @@ match mode:
             region = raw_data[border:-border,k*skip+border:(k+1)*skip-border]
             data.append(np.mean(np.mean(region, axis=0), axis=0))
         data = np.array(data)
-        print(data)
-        print(colour.RGB_to_XYZ(RGB=data, colourspace=colorspace_raw))
-        print(colour.XYZ_to_xy(colour.RGB_to_XYZ(RGB=data, colourspace=colorspace_raw)))
+        pprint(data)
+        pprint(colour.RGB_to_XYZ(RGB=data, colourspace=colorspace_raw))
+        pprint(colour.XYZ_to_xy(colour.RGB_to_XYZ(RGB=data, colourspace=colorspace_raw))[0:3])
+        pprint(colour.XYZ_to_xy(colour.RGB_to_XYZ(RGB=data, colourspace=colorspace_raw))[3])
+        colour.plotting.plot_RGB_colourspaces_in_chromaticity_diagram_CIE1931([colorspace_raw, colorspace_jpeg, colorspace_2pjpeg, colorspace_5pjpeg, colour.models.RGB_COLOURSPACE_sRGB])
