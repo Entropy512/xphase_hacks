@@ -1,12 +1,25 @@
 #!/usr/bin/env python3
 
-import cv2
 from turbojpeg import TurboJPEG, TJSAMP_420
-import sys
+import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 
 jpeg = TurboJPEG()
+
+ap = argparse.ArgumentParser()
+ap.add_argument('-m', '--mode', required=True, type=int, default=0,
+    help='creation mode, read source code for details')
+
+ap.add_argument('--minval', type=int, default=23,
+    help='minimum value for various modes, read source for details')
+
+ap.add_argument('--maxval', type=int, default=229,
+    help='maximum value for various modes, read source for details')
+
+ap.add_argument('-o', '--outfile', help='Output filename override')
+
+args = vars(ap.parse_args())
 
 w = 3264
 h = 2448
@@ -14,39 +27,41 @@ h = 2448
 hald_level = 11
 
 imgdata = np.ones((h,w,3),dtype=np.uint8)*20
-mode = 2
+mode = args['mode']
+minval = args['minval']
+maxval = args['maxval']
 match mode:
     case 0:
         for y in range(h):
-            val = 0 + int(np.floor(((256.0-0.0)*y)/h))
+            val = minval + int(np.floor(((maxval+1-minval)*y)/h))
             for x in range(w):
                 if(x < w/3):
-                    imgdata[y][x] = [255,val,val]
+                    imgdata[y][x] = [maxval, val, val]
                 elif(x < 2*w/3):
-                    imgdata[y][x] = [val, 255, val]
+                    imgdata[y][x] = [val, maxval, val]
                 else:
-                    imgdata[y][x] = [val, val, 255]
+                    imgdata[y][x] = [val, val, maxval]
 
     case 1:
         for y in range(h):
-            val = 0 + int(np.floor(((256.0-0.0)*y)/h))
+            val = minval + int(np.floor(((maxval+1-minval)*y)/h))
             for x in range(w):
                 if(x < w/3):
-                    imgdata[y][x] = [val,0,0]
+                    imgdata[y][x] = [val, minval, minval]
                 elif(x < 2*w/3):
-                    imgdata[y][x] = [0, val, 0]
+                    imgdata[y][x] = [minval, val, minval]
                 else:
-                    imgdata[y][x] = [0, 0, val]
+                    imgdata[y][x] = [minval, minval, val]
 
     case 2:
-        imgdata[:,0:int(w/4)] = [23, 23, 229]
-        imgdata[:,int(w/4):int(2*w/4)] = [23, 229, 23]
-        imgdata[:,int(2*w/4):int(3*w/4)] = [229, 23, 23]
-        imgdata[:,int(3*w/4):] = [229, 229, 229]
+        imgdata[:,0:int(w/4)] = [minval, minval, maxval]
+        imgdata[:,int(w/4):int(2*w/4)] = [minval, maxval, minval]
+        imgdata[:,int(2*w/4):int(3*w/4)] = [maxval, minval, minval]
+        imgdata[:,int(3*w/4):] = [maxval, maxval, maxval]
 
     case 3:
         for y in range(h):
-            val = 0 + int(np.floor(((256.0-0.0)*y)/h))
+            val = minval + int(np.floor(((maxval-minval)*y)/h))
             imgdata[y][:] = [val,val,val]
 
     case 4:
@@ -57,8 +72,6 @@ match mode:
         print((hald_mod)*haldsq*2)
         maxy = 0
         maxx = 0
-        minval = 23
-        maxval = 229
         dval = (maxval-minval)*1.0
         print(dval)
         for r in range(haldsq):
@@ -79,5 +92,12 @@ match mode:
         print(maxy*2)
         print(maxx*2)
         print(np.amax(imgdata))
-with open('multisat.jpg', 'wb') as outfile:
+    
+
+if(args['outfile'] is not None):
+    fname = args['outfile']
+else:
+    fname = 'mode{:02}.jpg'.format(mode)
+
+with open(fname, 'wb') as outfile:
     outfile.write(jpeg.encode(imgdata,quality=99, jpeg_subsample=TJSAMP_420))
