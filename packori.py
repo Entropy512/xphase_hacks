@@ -52,9 +52,16 @@ ap.add_argument('-b', '--bracketcount', help='Shot bracket count (3 or 6)',
 # FIXME:  Find a way to get this from the original file bins too
 ap.add_argument('-n', '--usernadir', help='Look for and add a user nadir block', action='store_true')
 
+# FIXME:  Scan ORIs SOOC have a bunch of empty entries.  Needs testing to see if these matter to PanoManager
+ap.add_argument('-s', '--scan', help='Pack an Xphase Scan ORI file', action='store_true')
+
 args = vars(ap.parse_args())
 bin_file = args['output']
 bracket_count = args['bracketcount']
+# Scan ORIs seem to have placeholders for higher shot count, may be a problem depending on settings?
+entry_count = 36 if args['scan'] else 25
+shot_count = 30 if args['scan'] else 25
+lens_count = 3 if args['scan'] else 25
 
 # ORIs must be of a specific format, and the date in the header must match the date encoded in the filename
 # Extract the year,month,day,hours,minutes,seconds from the file name
@@ -94,16 +101,16 @@ with open(bin_file,'wb') as myfile:
     with open('smallblock.bin', 'rb') as sbfile:
         sbfile.seek(0,os.SEEK_END)
         sblen = sbfile.tell()
-        if(sblen != 800):
-            raise("Smallblock length not 800 - not supported!")
+        if(sblen != 32*lens_count):
+            raise("Smallblock length not " + str(32*lens_count) + " - not supported!")
         myfile.write(struct.pack('<hL',-40, sblen))
         bulkread(sbfile, myfile, myfile.tell(), sblen)
 
     with open('largeblock.bin', 'rb') as lbfile:
         lbfile.seek(0,os.SEEK_END)
         lblen = lbfile.tell()
-        if(lblen != 77000):
-            raise("Largeblock length not 77000 - not supported!")
+        if(lblen != 3080*lens_count):
+            raise("Largeblock length not " + str(3080*lens_count) + " - not supported!")
         myfile.write(struct.pack('<hL',-41, lblen))
         bulkread(lbfile, myfile, myfile.tell(), lblen)
 
@@ -111,21 +118,28 @@ with open(bin_file,'wb') as myfile:
     #Write out ORI table.  We always go in a deterministic order
     #but we do need to cache file lengths in the table unless we want to re-get the
     #lengths
-    imgdata_start = myfile.tell() + 12+1000*bracket_count
-    tbllen = 1000*bracket_count
+    tbllen = 40*entry_count*bracket_count        
+    imgdata_start = myfile.tell() + 12+tbllen
+
     myfile.write(struct.pack('<hL', -39, tbllen))
-    filelens = np.zeros((25,bracket_count,2),dtype=np.int32)
+    filelens = np.zeros((shot_count,bracket_count,2),dtype=np.int32)
     filetotal = 0
     for typ in range(2):
-        for lens in range(25):
+        for lens in range(entry_count):
             for exp in range(bracket_count):
-                if(typ == 0):
-                    fname = "IMG_{:02}_".format(lens) + str(exp) + "_preview.jpg"
+                if(lens < shot_count):
+                    if(typ == 0):
+                        fname = "IMG_{:02}_".format(lens) + str(exp) + "_preview.jpg"
+                    else:
+                        fname = "IMG_{:02}_".format(lens) + str(exp) + ".jpg"
+                    filelen = get_filelen(fname)
+                    filelens[lens][exp][typ] = filelen
+                    fileptr = filetotal
                 else:
-                    fname = "IMG_{:02}_".format(lens) + str(exp) + ".jpg"
-                filelen = get_filelen(fname)
-                filelens[lens][exp][typ] = filelen
-                fileptr = filetotal
+                    # Scan ORIs have a bunch of empty table entries with offset 0 and length 0
+                    filelen = 0
+                    fileptr = 0
+
                 myfile.write(struct.pack('<HHHxxxxxxLL', typ+1, lens, exp, fileptr, filelen))
                 filetotal += filelen
 
@@ -134,7 +148,7 @@ with open(bin_file,'wb') as myfile:
     #writing the last table entry
     myfile.write(struct.pack('<hL', -45, filetotal))
     for typ in range(2):
-        for lens in range(25):
+        for lens in range(shot_count):
             for exp in range(bracket_count):
                 if(typ == 0):
                     fname = "IMG_{:02}_".format(lens) + str(exp) + "_preview.jpg"
